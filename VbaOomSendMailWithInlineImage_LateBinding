@@ -1,0 +1,58 @@
+Sub SendMailWithInlineImage_LateBinding()
+
+    Dim olApp As Object
+    Dim olMail As Object
+    Dim olAttach As Object
+    
+    ' MAPI property tags
+    Dim PR_ATTACH_CONTENT_ID As String
+    Dim PR_ATTACHMENT_HIDDEN As String
+    
+    
+    sSubject = "This is a test sending an inline picture."          ' Todo: change
+    sTo = "contosouser@contoso.com"                                 ' Todo: change
+    sPictureId_1 = "InlineImage1"                                   ' Todo: change
+    sPicturePath_1 = "C:\Users\contosouser\Pictures\aaa.jpg"        ' Todo: change
+ 
+  
+    PR_ATTACH_CONTENT_ID = "http://schemas.microsoft.com/mapi/proptag/0x3712001F"
+    PR_ATTACHMENT_HIDDEN = "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
+    
+    ' Create Outlook Application (late binding)
+    On Error Resume Next
+    Set olApp = GetObject(, "Outlook.Application")
+    If olApp Is Nothing Then
+        Set olApp = CreateObject("Outlook.Application")
+    End If
+    On Error GoTo 0
+    
+    ' Create MailItem (0 = olMailItem)
+    Set olMail = olApp.CreateItem(0)
+    
+    With olMail
+        
+        .To = sTo
+        .Subject = sSubject
+        
+        ' HTML body referencing CID
+        .HTMLBody = _
+            "<html><body>" & _
+            "<h3>Inline image example</h3>" & _
+            "<p>Image below:</p>" & _
+            "<img src='cid:" & sPictureId_1 & "'>" & _
+            "</body></html>"
+        
+        ' Add attachment (1 = olByValue)
+        Set olAttach = .Attachments.Add(sPicturePath_1, 1)
+        
+        ' Set CID so HTML can reference it
+        olAttach.PropertyAccessor.SetProperty PR_ATTACH_CONTENT_ID, sPictureId_1
+        
+        ' Hide attachment from displaying in attachment list
+        olAttach.PropertyAccessor.SetProperty PR_ATTACHMENT_HIDDEN, True
+        
+        .Display   ' change to .Send to send directly
+        
+    End With
+
+End Sub
